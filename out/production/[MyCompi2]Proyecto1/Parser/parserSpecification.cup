@@ -1,0 +1,258 @@
+/***************************************************************************/
+/*----------------------------------parse----------------------------------*/
+/***************************************************************************/
+
+//-----------------User code----------------
+//importacion y paquete
+package Parser;
+import java_cup.runtime.Symbol;
+import java_cup.runtime.*;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.awt.Color;
+import MyObjects.MyError.MyErrorKind;
+import MyObjects.MyError;
+import Ast.*;
+
+init with {:
+    //Cosas que poner en el constructor de 'parser'
+:}
+
+parser code
+{:
+    public Statement root;
+
+    public void syntax_error(Symbol s)
+    {        
+        int linea = s.left;
+        int columna = s.right;
+        MyError myError = new MyError(MyErrorKind.SINTACTICO, linea, columna, "Error cerca de: " + sym.terminalNames[s.sym] +
+                                    (s.value == null ? "" : ". value: [" + s.value.toString() + "]"));
+
+        MyError.reportarError(myError);
+        report_error(myError.msg, myError);
+    }
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception
+    {        
+        int linea = s.left;
+        int columna = s.right;
+        MyError myError = new MyError(MyErrorKind.SINTACTICO, linea, columna, "Error cerca de: " + sym.terminalNames[s.sym] +
+                                    (s.value == null ? "" : ". value: [" + s.value.toString() + "]"));
+
+        MyError.reportarError(myError);
+        report_fatal_error(myError.msg + " linea: " + linea, myError);
+    }
+
+    //[!] No tengo ni idea de porque escribiamos estas dos funciones, particularmente no
+    //se porque llamamos a done_parsing();
+    //:(((((((((
+    public void report_error(String message, Object info){
+        System.out.println(message);
+    }
+    public void report_fatal_error(String message, Object info){
+        System.out.println(message);
+        done_parsing();
+    }
+:}
+
+action code
+{:
+    // cosas que se ponen al principio de la definicion de la clase
+    // aqui pueden ir funciones y atributos de la clase
+:}
+
+//Palabras reservadas:
+terminal            WHILE, IF, ELSE, STRUCT, RETURN;
+//Funciones:
+terminal            PRINT, SCAN, SUBSTRING, STRINGTODOUBLE, LENGTHOFARRAY, LENGTHOFSTRING;
+//Tipos:
+terminal            DOUBLE, BOOLEAN, STRING, ARREGLO;
+//Operadores, separadores y llaves
+terminal            O_PAREN, C_PAREN, O_CURLY, C_CURLY, O_BOX, C_BOX, COMMA, SEMICOLON, EQ;
+terminal            PLUS, MINUS, MULT, MOD, DIV, LESS, GREATER, LESS_EQ, GREATER_EQ, EQ_EQ, NOT_EQ, AND, OR, NOT;
+
+//Literals
+terminal String     STRING_LITERAL;
+terminal Double     DOUBLE_LITERAL;
+terminal Boolean    BOOLEAN_LITERAL;
+terminal NULL_LITERAL;//esto seguro lo vamos a tener que quitar o va a tener que ser nonterminal
+
+//Non literals
+terminal String     IDENTIFIER;
+
+/* Non-terminals */
+non terminal Expression                 s;
+non terminal Statement                  statement;
+non terminal Expression                 expression;
+non terminal Expression                 atomicExpression;
+non terminal Tipo                       tipo;
+
+/* Precedences */
+precedence left      OR;
+precedence left      AND;
+precedence left      EQ_EQ, NOT_EQ;
+precedence nonassoc  GREATER, LESS, GREATER_EQ, LESS_EQ;
+precedence left      PLUS, MINUS;
+precedence left      MULT, DIV, MOD;
+precedence right     NOT;
+
+/* The grammar */
+s ::= statement:stmt
+        {:
+             root = stmt;
+        :}
+      |
+      /*empty*/
+        {:
+            RESULT = null;
+            //@TODO: reportar error de archivo vacio
+            System.out.println("parser ufe: root vacia");
+        :}
+;
+
+//l_statements ::= statement:stmt
+//             {:
+//                 RESULT = new LinkedList<Statement>();
+//                 RESULT.add(stmt);
+//             :}
+//             |
+//             l_statements:stmts statement:stmt
+//             {:
+//                 RESULT = statements;
+//                 RESULT.add(statement);
+//             :}
+//;
+
+//un if (anidado tambien)
+//un while
+//declaracion
+//asignacion
+//expr;
+statement ::= IDENTIFIER:id EQ expression:e1 SEMICOLON
+        {:
+            RESULT = new Assignment(id, e1);
+        :}
+        |
+        tipo:t1 IDENTIFIER:id EQ expression:e1 SEMICOLON
+        {:
+            RESULT = new Declaration(t1, id, e1);
+        :}
+        |
+        expression:e1 SEMICOLON
+        {:
+            RESULT = new ExpressionStatement(e1);
+        :}
+;
+
+tipo ::= STRING
+        {:
+            RESULT = Tipo.STRING;
+        :}
+        |
+        DOUBLE
+        {:
+            RESULT = Tipo.DOUBLE;
+        :}
+        |
+        BOOLEAN
+        {:
+            RESULT = Tipo.BOOLEAN;
+        :}
+;
+
+//TODO: hacer las funciones nativas print y scan HOY
+
+expression ::=/*expression:e1 LESS expression:e2
+               {:
+                   RESULT = new MenorQue(e1, e2, e1left, e2right);
+               :}
+               |
+               expression:e1 GREATER expression:e2
+               {:
+                   RESULT = new MayorQue(e1, e2, e1left, e2right);
+               :}
+               |
+               expression:e1 LESS_EQ expression:e2
+               {:
+                   RESULT = new MenorOIgual(e1, e2, e1left, e2right);
+               :}
+               |
+               expression:e1 GREATER_EQ expression:e2
+               {:
+                   RESULT = new MayorOIgual(e1, e2, e1left, e2right);
+               :}
+               |
+               expression:e1 EQ_EQ expression:e2
+               {:
+                   RESULT = new IgualA(e1, e2, e1left, e2right);
+               :}
+               |
+               expression:e1 NOT_EQ expression:e2
+               {:
+                   RESULT = new NoIgualA(e1, e2, e1left, e2right);
+               :}
+               |
+               expression:e1 AND expression:e2
+               {:
+                   RESULT = new AndLogico(e1, e2, e1left, e2right);
+               :}
+               |
+               expression:e1 OR expression:e2
+               {:
+                   RESULT = new OrLogico(e1, e2, e1left, e2right);
+               :}
+               |*/
+               expression:e1 PLUS expression:e2
+               {:
+                   RESULT = new Suma(e1, e2, e1left, e2right);
+               :}
+               |
+               expression:e1 MINUS expression:e2
+               {:
+                   RESULT = new Resta(e1, e2, e1left, e2right);
+               :}
+               |
+               expression:e1 MULT expression:e2
+               {:
+                   RESULT = new Multiplicacion(e1, e2,e1left, e2right);
+               :}
+               |
+               expression:e1 DIV expression:e2
+               {:
+                   RESULT = new Division(e1, e2, e1left, e2right);
+               :}
+               |
+               expression:e1 MOD expression:e2
+               {:
+                   RESULT = new Modulo(e1, e2, e1left, e2right);
+               :}
+               |
+               atomicExpression:e1
+               {:
+                   RESULT = e1;
+               :}
+;
+
+atomicExpression ::= /*STRING_LITERAL:val
+         {:
+             RESULT = new StringLiteral(val, valleft, valright);
+             RESULT.setLocation(valleft, valright);
+         :}
+         |
+         BOOLEAN_LITERAL:val
+         {:
+             RESULT = new BooleanLiteral(val, valleft, valright);
+         :}
+         |*/
+         DOUBLE_LITERAL:val
+         {:
+             RESULT = new DoubleLiteral(val, valleft, valright);
+         :}
+         |
+         O_PAREN expression:expr C_PAREN
+         {:
+             RESULT = expr;
+         :}
+;
+
