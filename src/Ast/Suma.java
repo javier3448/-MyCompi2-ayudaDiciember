@@ -12,10 +12,10 @@ public class Suma extends Expression {
     }
 
     @Override
-    public ExprResult execute() {
+    public ExprResult execute(Entorno entorno) {
 
-        ExprResult exprResultIzq  = izq.execute();
-        ExprResult exprResultDer  = der.execute();
+        ExprResult exprResultIzq  = izq.execute(entorno);
+        ExprResult exprResultDer  = der.execute(entorno);
 
         if(exprResultIzq.tipo==Tipo.DOUBLE && exprResultDer.tipo == Tipo.DOUBLE){
             Double resultado = (Double) exprResultIzq.value + (Double) exprResultDer.value;

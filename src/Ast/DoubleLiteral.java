@@ -10,7 +10,7 @@ public class DoubleLiteral extends  Expression{
     }
 
     @Override
-    public ExprResult execute() {
+    public ExprResult execute(Entorno entorno) {
         return new ExprResult(Tipo.DOUBLE,valor);
     }
 }

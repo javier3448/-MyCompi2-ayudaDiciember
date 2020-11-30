@@ -102,10 +102,11 @@ public class sym {
   };
 
   /* non terminals */
-  static final int tipo = 4;
+  static final int tipo = 5;
+  static final int l_statements = 1;
   static final int s = 0;
-  static final int atomicExpression = 3;
-  static final int statement = 1;
-  static final int expression = 2;
+  static final int atomicExpression = 4;
+  static final int statement = 2;
+  static final int expression = 3;
 }
 

@@ -4,5 +4,5 @@ public abstract class Statement {
     public int linea;
     public int col;
 
-    public abstract void execute();
+    public abstract void execute(Entorno entorno);
 }

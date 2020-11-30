@@ -11,6 +11,6 @@ public abstract class Expression {
         this.col = col;
     }
 
-    public abstract ExprResult execute();
+    public abstract ExprResult execute(Entorno entorno);
 
 }

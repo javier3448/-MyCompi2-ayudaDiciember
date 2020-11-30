@@ -9,7 +9,15 @@ public class Assignment extends Statement{
         this.val = val;
     }
 
-    public void execute() {
-        //AQUI AQUI AQUI
+    public void execute(Entorno entorno) {
+        var exprResult = val.execute(entorno);
+
+        String mensajeError = entorno.trySetVariable(this.identifier, exprResult);
+
+        if(mensajeError != null){
+            System.out.println(mensajeError +
+                    "Linea:   " + this.linea + "\n" +
+                    "Columna: " + this.col + "\n");
+        }
     }
 }

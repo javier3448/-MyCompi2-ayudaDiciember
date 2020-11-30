@@ -8,7 +8,7 @@ public class ExpressionStatement extends Statement{
         this.expr = expr;
     }
 
-    public void execute() {
-
+    public void execute(Entorno entorno) {
+        expr.execute(entorno);
     }
 }
